@@ -12,7 +12,8 @@ def extract_patient_data(resource):
     new_record = {
         'id': resource['id'],
         'birth_date': safe_extract(resource, ['birthDate']),
-        'first_name': safe_extract(resource, ['name', 0, 'given']),
+        'first_name': safe_extract(resource, ['name', 0, 'given', 0]),
+        'middle_name': safe_extract(resource, ['name', 0, 'given', 1]),
         'last_name': safe_extract(resource, ['name', 0, 'family']),
         'marital': safe_extract(resource, ['maritalStatus', 'coding', 0, 'code']),
         'race': safe_extract(resource, ['extension', 0, 'extension', 0, 'valueCoding', 'display']),
