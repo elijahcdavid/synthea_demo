@@ -6,6 +6,7 @@ def safe_extract(resource, keys):
             resource = resource[key]
         return resource
     except (KeyError, IndexError, TypeError) as e:
+        print(f'{type(e).__name__}: {keys}')
         raise e
 
 def extract_patient_data(resource):
@@ -41,7 +42,7 @@ def extract_encounter_data(resource):
         'provider': safe_extract(resource, ['serviceProvider', 'display']),
         'encounter_class': safe_extract(resource, ['class', 'code']),
         'code': ','.join(str(safe_extract(code, ['code'])) for code in safe_extract(resource, ['type', 0, 'coding']) or []),
-        'description': ','.join(str(safe_extract(code, ['code'])) for code in safe_extract(resource, ['type', 0, 'coding'] or [])),
+        'description': ','.join(str(safe_extract(code, ['display'])) for code in safe_extract(resource, ['type', 0, 'coding'] or [])),
     }
     return new_record
 
@@ -113,4 +114,9 @@ def load_data_to_df(path):
     diagnostic_df = pd.DataFrame(diagnostic_records)
     claim_df = pd.DataFrame(claim_records)
 
-    return patient_df, encounter_df, condition_df, diagnostic_df, claim_df
+    return {'patient_df': patient_df, 
+            'encounter_df': encounter_df, 
+            'condition_df': condition_df, 
+            'diagnostic_df': diagnostic_df, 
+            'claim_df': claim_df
+    } 
