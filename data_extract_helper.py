@@ -1,4 +1,16 @@
 import pandas as pd
+from geopy.geocoders import Nominatim
+from geopy.location import Location
+
+def get_country_from_lat_long(lat, long):
+    geolocator = Nominatim(user_agent='geo_app')
+    coordinates = f'{lat}, {long}'
+
+    try:
+        location: Location = geolocator.reverse(coordinates, exactly_one=True, language='en')
+        return location.raw['address']['county']
+    except Exception as e:
+        raise e
 
 def safe_extract(resource, keys):
     try:
@@ -9,26 +21,31 @@ def safe_extract(resource, keys):
         return ''
 
 def extract_patient_data(resource):
+    # Extract latitude and longitude
+    lat = safe_extract(resource, ['address', 0, 'extension', 0, 'extension', 0, 'valueDecimal'])
+    long = safe_extract(resource, ['address', 0, 'extension', 0, 'extension', 1, 'valueDecimal'])
+
     new_record = {
         'id': resource['id'],
-        'birth_date': safe_extract(resource, ['birthDate']),
-        'first_name': safe_extract(resource, ['name', 0, 'given', 0]),
-        'middle_name': safe_extract(resource, ['name', 0, 'given', 1]),
-        'last_name': safe_extract(resource, ['name', 0, 'family']),
+        'birthDate': safe_extract(resource, ['birthDate']),
+        'firstName': safe_extract(resource, ['name', 0, 'given', 0]),
+        'middleName': safe_extract(resource, ['name', 0, 'given', 1]),
+        'lastName': safe_extract(resource, ['name', 0, 'family']),
         'marital': safe_extract(resource, ['maritalStatus', 'coding', 0, 'code']),
         'race': safe_extract(resource, ['extension', 0, 'extension', 0, 'valueCoding', 'display']),
         'ethnicity': safe_extract(resource, ['extension', 1, 'extension', 0, 'valueCoding', 'display']),
         'gender': safe_extract(resource, ['gender']),
-        'birth_place_city': safe_extract(resource, ['extension', 4, 'valueAddress', 'city']),
-        'birth_place_state': safe_extract(resource, ['extension', 4, 'valueAddress', 'state']),
-        'birth_place_country': safe_extract(resource, ['extension', 4, 'valueAddress', 'country']),
+        'birthPlaceCity': safe_extract(resource, ['extension', 4, 'valueAddress', 'city']),
+        'birthPlaceState': safe_extract(resource, ['extension', 4, 'valueAddress', 'state']),
+        'birthPlaceCountry': safe_extract(resource, ['extension', 4, 'valueAddress', 'country']),
         'street': safe_extract(resource, ['address', 0, 'line', 0]),
         'city': safe_extract(resource, ['address', 0, 'city']),
         'state': safe_extract(resource, ['address', 0, 'state']),
+        # 'county': get_country_from_lat_long(lat, long) or '',
         'country': safe_extract(resource, ['address', 0, 'country']),
         'zip': safe_extract(resource, ['address', 0, 'postalCode']),
-        'lat': safe_extract(resource, ['address', 0, 'extension', 0, 'extension', 0, 'valueDecimal']),
-        'long': safe_extract(resource, ['address', 0, 'extension', 0, 'extension', 1, 'valueDecimal'])
+        'lat': lat,
+        'long': long
     }
     return new_record
 
@@ -39,7 +56,7 @@ def extract_encounter_data(resource):
         'end': safe_extract(resource, ['period', 'end']),
         'patient': safe_extract(resource, ['subject', 'reference'] or '').replace('urn:uuid:', ''),
         'provider': safe_extract(resource, ['serviceProvider', 'display']),
-        'encounter_class': safe_extract(resource, ['class', 'code']),
+        'encounterClass': safe_extract(resource, ['class', 'code']),
         'code': ', '.join(str(safe_extract(code, ['code'])) for code in safe_extract(resource, ['type', 0, 'coding']) or []),
         'description': ', '.join(str(safe_extract(code, ['display'])) for code in safe_extract(resource, ['type', 0, 'coding'] or [])),
     }
@@ -73,9 +90,9 @@ def extract_claim_data(resource):
         'created': safe_extract(resource, ['created']),
         'patient': safe_extract(resource, ['patient', 'reference'] or '').replace('urn:uuid:', ''),
         'provider': safe_extract(resource, ['provider', 'display']),
-        'diagnostic_report': safe_extract(resource, ['created']),
+        'diagnosticReport': safe_extract(resource, ['created']),
         'coverage': safe_extract(resource, ['insurance', 0, 'coverage', 'display']),
-        'item_code': ', '.join(str(safe_extract(item, ['productOrService', 'coding', 0, 'code'])) for item in safe_extract(resource, ['item']) or []),
+        'itemCode': ', '.join(str(safe_extract(item, ['productOrService', 'coding', 0, 'code'])) for item in safe_extract(resource, ['item']) or []),
         'item': ', '.join(str(safe_extract(item, ['productOrService', 'coding', 0, 'display'])) for item in safe_extract(resource, ['item']) or []),
         'total': safe_extract(resource, ['total', 'value'])
     }

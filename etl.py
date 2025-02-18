@@ -18,7 +18,7 @@ if __name__ == '__main__':
     result = deh.load_data_to_df(path)
     print('data load complete')
 
-    # Load environment variables
+    # Load environment variables from .env file
     load_dotenv()
     user = os.getenv('DB_USER')
     password = os.getenv('DB_PASSWORD')
@@ -34,7 +34,7 @@ if __name__ == '__main__':
             result['patient_df'].to_sql('patient', conn, if_exists='replace', index=False)
             result['encounter_df'].to_sql('encounter', conn, if_exists='replace', index=False)
             result['condition_df'].to_sql('condition', conn, if_exists='replace', index=False)
-            result['diagnostic_df'].to_sql('diagnostic_report', conn, if_exists='replace', index=False)
+            result['diagnostic_df'].to_sql('diagnosticReport', conn, if_exists='replace', index=False)
             result['claim_df'].to_sql('claim', conn, if_exists='replace', index=False)
     except Exception as e:
         print(f'Error: {e}')
