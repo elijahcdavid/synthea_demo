@@ -27,11 +27,14 @@ if __name__ == '__main__':
 
     # Create a database connection
     engine = create_engine(f'postgresql://{user}:{password}@{host}/{db_name}')
-    
-    with engine.connect() as conn:
-        # Load dataframes to SQL tables
-        result['patient_df'].to_sql('patient', conn, if_exists='replace', index=False)
-        result['encounter_df'].to_sql('encounter', conn, if_exists='replace', index=False)
-        result['condition_df'].to_sql('condition', conn, if_exists='replace', index=False)
-        result['diagnostic_df'].to_sql('diagnostic_report', conn, if_exists='replace', index=False)
-        result['claim_df'].to_sql('claim', conn, if_exists='replace', index=False)
+
+    try:
+        with engine.connect() as conn:
+            # Load dataframes to SQL tables
+            result['patient_df'].to_sql('patient', conn, if_exists='replace', index=False)
+            result['encounter_df'].to_sql('encounter', conn, if_exists='replace', index=False)
+            result['condition_df'].to_sql('condition', conn, if_exists='replace', index=False)
+            result['diagnostic_df'].to_sql('diagnostic_report', conn, if_exists='replace', index=False)
+            result['claim_df'].to_sql('claim', conn, if_exists='replace', index=False)
+    except Exception as e:
+        print(f'Error: {e}')

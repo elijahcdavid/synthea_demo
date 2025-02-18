@@ -5,9 +5,8 @@ def safe_extract(resource, keys):
         for key in keys:
             resource = resource[key]
         return resource
-    except (KeyError, IndexError, TypeError) as e:
-        print(f'{type(e).__name__}: {keys}')
-        raise e
+    except (KeyError, IndexError, TypeError):
+        return ''
 
 def extract_patient_data(resource):
     new_record = {
@@ -41,8 +40,8 @@ def extract_encounter_data(resource):
         'patient': safe_extract(resource, ['subject', 'reference'] or '').replace('urn:uuid:', ''),
         'provider': safe_extract(resource, ['serviceProvider', 'display']),
         'encounter_class': safe_extract(resource, ['class', 'code']),
-        'code': ','.join(str(safe_extract(code, ['code'])) for code in safe_extract(resource, ['type', 0, 'coding']) or []),
-        'description': ','.join(str(safe_extract(code, ['display'])) for code in safe_extract(resource, ['type', 0, 'coding'] or [])),
+        'code': ', '.join(str(safe_extract(code, ['code'])) for code in safe_extract(resource, ['type', 0, 'coding']) or []),
+        'description': ', '.join(str(safe_extract(code, ['display'])) for code in safe_extract(resource, ['type', 0, 'coding'] or [])),
     }
     return new_record
 
@@ -53,8 +52,8 @@ def extract_condition_data(resource):
         'recordedDate': safe_extract(resource, ['recordedDate']),
         'patient': safe_extract(resource, ['subject', 'reference'] or '').replace('urn:uuid:', ''),
         'encounter': safe_extract(resource, ['encounter', 'reference'] or '').replace('urn:uuid:', ''),
-        'code': ','.join(str(safe_extract(code, ['code'])) for code in safe_extract(resource, ['code', 'coding']) or []),
-        'description': ','.join(str(safe_extract(code, ['display'])) for code in safe_extract(resource, ['code', 'coding']) or []),
+        'code': ', '.join(str(safe_extract(code, ['code'])) for code in safe_extract(resource, ['code', 'coding']) or []),
+        'description': ', '.join(str(safe_extract(code, ['display'])) for code in safe_extract(resource, ['code', 'coding']) or []),
     }
     return new_record
 
@@ -63,8 +62,8 @@ def extract_diagnostic_data(resource):
         'id': resource['id'],
         'patient': safe_extract(resource, ['subject', 'reference'] or '').replace('urn:uuid:', ''),
         'encounter': safe_extract(resource, ['encounter', 'reference'] or '').replace('urn:uuid:', ''),
-        'code': ','.join(str(safe_extract(code, ['code'])) for code in safe_extract(resource, ['code', 'coding']) or []),
-        'description': ','.join(str(safe_extract(code, ['display'])) for code in safe_extract(resource, ['code', 'coding']) or []),
+        'code': ', '.join(str(safe_extract(code, ['code'])) for code in safe_extract(resource, ['code', 'coding']) or []),
+        'description': ', '.join(str(safe_extract(code, ['display'])) for code in safe_extract(resource, ['code', 'coding']) or []),
     }
     return new_record
 
@@ -76,8 +75,8 @@ def extract_claim_data(resource):
         'provider': safe_extract(resource, ['provider', 'display']),
         'diagnostic_report': safe_extract(resource, ['created']),
         'coverage': safe_extract(resource, ['insurance', 0, 'coverage', 'display']),
-        'item_code': ','.join(str(safe_extract(item, ['productOrService', 'coding', 0, 'code'])) for item in safe_extract(resource, ['item']) or []),
-        'item': ','.join(str(safe_extract(item, ['productOrService', 'coding', 0, 'display'])) for item in safe_extract(resource, ['item']) or []),
+        'item_code': ', '.join(str(safe_extract(item, ['productOrService', 'coding', 0, 'code'])) for item in safe_extract(resource, ['item']) or []),
+        'item': ', '.join(str(safe_extract(item, ['productOrService', 'coding', 0, 'display'])) for item in safe_extract(resource, ['item']) or []),
         'total': safe_extract(resource, ['total', 'value'])
     }
     return new_record
