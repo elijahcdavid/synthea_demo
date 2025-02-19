@@ -10,7 +10,7 @@ def get_country_from_lat_long(lat, long):
         location: Location = geolocator.reverse(coordinates, exactly_one=True, language='en')
         return location.raw['address']['county']
     except Exception as e:
-        raise e
+        return None
 
 def safe_extract(resource, keys):
     try:
@@ -22,8 +22,8 @@ def safe_extract(resource, keys):
 
 def extract_patient_data(resource):
     # Extract latitude and longitude
-    lat = safe_extract(resource, ['address', 0, 'extension', 0, 'extension', 0, 'valueDecimal'])
-    long = safe_extract(resource, ['address', 0, 'extension', 0, 'extension', 1, 'valueDecimal'])
+    latitude = safe_extract(resource, ['address', 0, 'extension', 0, 'extension', 0, 'valueDecimal'])
+    longitude = safe_extract(resource, ['address', 0, 'extension', 0, 'extension', 1, 'valueDecimal'])
 
     new_record = {
         'id': resource['id'],
@@ -42,11 +42,11 @@ def extract_patient_data(resource):
         'street': safe_extract(resource, ['address', 0, 'line', 0]),
         'city': safe_extract(resource, ['address', 0, 'city']),
         'state': safe_extract(resource, ['address', 0, 'state']),
-        # 'county': get_country_from_lat_long(lat, long) or '',
+        'county': get_country_from_lat_long(latitude, longitude),
         'country': safe_extract(resource, ['address', 0, 'country']),
         'zip': safe_extract(resource, ['address', 0, 'postalCode']),
-        'latitude': lat,
-        'longitude': long
+        'latitude': latitude,
+        'longitude': longitude
     }
     return new_record
 
