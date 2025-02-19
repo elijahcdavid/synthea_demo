@@ -1,4 +1,16 @@
 import pandas as pd
+from geopy.geocoders import Nominatim
+from geopy.location import Location
+
+def get_country_from_lat_long(lat, long):
+    geolocator = Nominatim(user_agent='geo_app')
+    coordinates = f'{lat}, {long}'
+
+    try:
+        location: Location = geolocator.reverse(coordinates, exactly_one=True, language='en')
+        return location.raw['address']['county']
+    except Exception as e:
+        return None
 
 def safe_extract(resource, keys):
     try:
@@ -6,12 +18,17 @@ def safe_extract(resource, keys):
             resource = resource[key]
         return resource
     except (KeyError, IndexError, TypeError):
-        return ''
+        return None
 
 def extract_patient_data(resource):
+    # Extract latitude and longitude
+    latitude = safe_extract(resource, ['address', 0, 'extension', 0, 'extension', 0, 'valueDecimal'])
+    longitude = safe_extract(resource, ['address', 0, 'extension', 0, 'extension', 1, 'valueDecimal'])
+
     new_record = {
         'id': resource['id'],
         'birth_date': safe_extract(resource, ['birthDate']),
+        'deceased_date': safe_extract(resource, ['deceasedDateTime']),
         'first_name': safe_extract(resource, ['name', 0, 'given', 0]),
         'middle_name': safe_extract(resource, ['name', 0, 'given', 1]),
         'last_name': safe_extract(resource, ['name', 0, 'family']),
@@ -25,10 +42,11 @@ def extract_patient_data(resource):
         'street': safe_extract(resource, ['address', 0, 'line', 0]),
         'city': safe_extract(resource, ['address', 0, 'city']),
         'state': safe_extract(resource, ['address', 0, 'state']),
+        'county': get_country_from_lat_long(latitude, longitude),
         'country': safe_extract(resource, ['address', 0, 'country']),
         'zip': safe_extract(resource, ['address', 0, 'postalCode']),
-        'lat': safe_extract(resource, ['address', 0, 'extension', 0, 'extension', 0, 'valueDecimal']),
-        'long': safe_extract(resource, ['address', 0, 'extension', 0, 'extension', 1, 'valueDecimal'])
+        'latitude': latitude,
+        'longitude': longitude
     }
     return new_record
 
@@ -36,7 +54,7 @@ def extract_encounter_data(resource):
     new_record = {
         'id': resource['id'],
         'start': safe_extract(resource, ['period', 'start']),
-        'end': safe_extract(resource, ['period', 'end']),
+        'finish': safe_extract(resource, ['period', 'end']),
         'patient': safe_extract(resource, ['subject', 'reference'] or '').replace('urn:uuid:', ''),
         'provider': safe_extract(resource, ['serviceProvider', 'display']),
         'encounter_class': safe_extract(resource, ['class', 'code']),
@@ -48,8 +66,8 @@ def extract_encounter_data(resource):
 def extract_condition_data(resource):
     new_record = {
         'id': resource['id'],
-        'onsetDateTime': safe_extract(resource, ['onsetDateTime']),
-        'recordedDate': safe_extract(resource, ['recordedDate']),
+        'onset_datetime': safe_extract(resource, ['onsetDateTime']),
+        'recorded_date': safe_extract(resource, ['recordedDate']),
         'patient': safe_extract(resource, ['subject', 'reference'] or '').replace('urn:uuid:', ''),
         'encounter': safe_extract(resource, ['encounter', 'reference'] or '').replace('urn:uuid:', ''),
         'code': ', '.join(str(safe_extract(code, ['code'])) for code in safe_extract(resource, ['code', 'coding']) or []),
