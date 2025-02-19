@@ -18,7 +18,7 @@ def safe_extract(resource, keys):
             resource = resource[key]
         return resource
     except (KeyError, IndexError, TypeError):
-        return ''
+        return None
 
 def extract_patient_data(resource):
     # Extract latitude and longitude
@@ -28,7 +28,7 @@ def extract_patient_data(resource):
     new_record = {
         'id': resource['id'],
         'birth_date': safe_extract(resource, ['birthDate']),
-        'deceased_date: ': safe_extract(resource, ['deceasedDateTime']),
+        'deceased_date': safe_extract(resource, ['deceasedDateTime']),
         'first_name': safe_extract(resource, ['name', 0, 'given', 0]),
         'middle_name': safe_extract(resource, ['name', 0, 'given', 1]),
         'last_name': safe_extract(resource, ['name', 0, 'family']),
