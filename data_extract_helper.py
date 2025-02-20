@@ -1,6 +1,9 @@
 import pandas as pd
+from tqdm import tqdm
 from geopy.geocoders import Nominatim
 from geopy.location import Location
+
+tqdm.pandas()
 
 def get_country_from_lat_long(lat, long):
     geolocator = Nominatim(user_agent='geo_app')
@@ -103,7 +106,8 @@ def load_data_to_df(path):
     patient_df, encounter_df, condition_df, diagnostic_df, claim_df = (pd.DataFrame() for _ in range(5))
     patient_records, encounter_records, condition_records, diagnostic_records, claim_records = ([] for _ in range(5))
     # iterate through the Synthea files
-    for file in path.glob('*.json'):
+
+    for file in tqdm(path.glob('*.json'), desc="Processing data"):
         try:
             json_data = pd.read_json(file)
 
